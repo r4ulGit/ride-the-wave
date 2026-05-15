@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline } from 'react-leaflet'
 import './App.css'
 
 // --- API CONFIGURATION ---
@@ -49,21 +49,18 @@ function decodePolyline(encoded) {
   return points;
 }
 
-// --- FIT BOUNDS HELPER ---
-// Zooms the Leaflet map to fit the full route after render
-function FitBounds({ positions }) {
-  const map = useMap();
-  useEffect(() => {
-    if (positions && positions.length > 1) {
-      map.fitBounds(positions, { padding: [18, 18] });
-    }
-  }, [map]);
-  return null;
-}
-
-// --- ROUTE MAP COMPONENT (Leaflet) ---
-function RouteMap({ polyline, color, activityId }) {
+// --- ROUTE MAP COMPONENT (Leaflet / react-leaflet v5) ---
+function RouteMap({ polyline, color }) {
   const positions = decodePolyline(polyline);
+  const mapRef = useRef(null);
+
+  // Fit map to route bounds after the map mounts
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map && positions.length > 1) {
+      map.fitBounds(positions, { padding: [20, 20] });
+    }
+  }, [polyline]);
 
   if (positions.length < 2) {
     return (
@@ -73,14 +70,14 @@ function RouteMap({ polyline, color, activityId }) {
     );
   }
 
-  // A center estimate (midpoint of route) for initial render before FitBounds runs
+  // Midpoint as initial center estimate (replaced by fitBounds above)
   const mid = positions[Math.floor(positions.length / 2)];
 
   return (
     <MapContainer
-      key={activityId}
+      ref={mapRef}
       center={mid}
-      zoom={13}
+      zoom={14}
       style={{ width: '100%', height: '100%' }}
       zoomControl={false}
       scrollWheelZoom={false}
@@ -95,12 +92,15 @@ function RouteMap({ polyline, color, activityId }) {
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
 
-      {/* Route polyline with glow effect via two overlapping lines */}
-      <Polyline positions={positions} color={color} weight={6}  opacity={0.15} />
-      <Polyline positions={positions} color={color} weight={2.5} opacity={0.95} />
-
-      {/* Auto-fit map to route bounds */}
-      <FitBounds positions={positions} />
+      {/* In react-leaflet v5, style props must go in pathOptions */}
+      <Polyline
+        positions={positions}
+        pathOptions={{ color: color, weight: 8, opacity: 0.2, lineCap: 'round', lineJoin: 'round' }}
+      />
+      <Polyline
+        positions={positions}
+        pathOptions={{ color: color, weight: 3, opacity: 1.0, lineCap: 'round', lineJoin: 'round' }}
+      />
     </MapContainer>
   );
 }
@@ -137,7 +137,7 @@ function ActivityCard({ act, onCenterMe }) {
     <div className="activity-card glass-card animate-in" onClick={onCenterMe}>
       {/* Route map */}
       <div className="card-map">
-        <RouteMap polyline={act.summary_polyline} color={sport.color} activityId={act.id} />
+        <RouteMap polyline={act.summary_polyline} color={sport.color} />
       </div>
 
       {/* Card body */}
