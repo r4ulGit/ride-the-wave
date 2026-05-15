@@ -1,4 +1,4 @@
-export const API_URL = "https://4gep4vk4j4tdbl2uhx2pdu5gt40hkcvy.lambda-url.eu-west-1.on.aws/";
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const SPORT_CONFIG = {
   Run:     { icon: '🏃', color: '#fc4c02', label: 'Run' },

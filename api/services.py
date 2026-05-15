@@ -97,7 +97,7 @@ def process_activities_logic():
     # Sort activities by date (newest first)
     all_activities_list.sort(key=lambda x: x.get('date', ''), reverse=True)
     matched_activities.sort(key=lambda x: x.get('date', ''), reverse=True)
-    last_10_activities = all_activities_list[:10]
+    last_10_activities = matched_activities[:10]
     
     # Sort weekly data and get last 8 weeks
     sorted_weeks = sorted(weekly_data.keys(), reverse=True)[:8]
@@ -135,6 +135,7 @@ def process_activities_logic():
         "filtered_km": round(sum(a['distance_km'] for a in matched_activities), 2),
         "matches_found": match_count,
         "last_10_activities": last_10_activities,
+        "all_polylines": [a['summary_polyline'] for a in matched_activities if a.get('summary_polyline')],
         "sport_breakdown": sport_breakdown,
         "weekly_chart": weekly_chart,
         "config": {

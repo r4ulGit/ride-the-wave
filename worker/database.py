@@ -4,8 +4,23 @@ from datetime import datetime
 from botocore.exceptions import ClientError
 import config
 
-# Initialize DynamoDB Resource
-dynamodb = boto3.resource('dynamodb', region_name=config.AWS_REGION)
+# Initialize DynamoDB resource
+if config.USE_LOCAL_DB:
+    print(f"🔌 Using LOCAL DynamoDB at {config.LOCAL_DB_ENDPOINT}")
+    dynamodb = boto3.resource(
+        'dynamodb',
+        endpoint_url=config.LOCAL_DB_ENDPOINT,
+        region_name='localhost',
+        aws_access_key_id='dummy',
+        aws_secret_access_key='dummy'
+    )
+else:
+    kwargs = {'region_name': config.AWS_REGION}
+    if config.AWS_ACCESS_KEY_ID and config.AWS_SECRET_ACCESS_KEY:
+        kwargs['aws_access_key_id'] = config.AWS_ACCESS_KEY_ID
+        kwargs['aws_secret_access_key'] = config.AWS_SECRET_ACCESS_KEY
+    dynamodb = boto3.resource('dynamodb', **kwargs)
+
 table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
 
 def save_activity(activity):

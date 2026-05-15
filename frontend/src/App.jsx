@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import './App.css';
-import { API_URL } from './config';
+import { API_URL, getSport } from './config';
 import { ProgressSection } from './components/ProgressSection';
 import { ActivityCarousel } from './components/ActivityCarousel';
+import { CombinedMap } from './components/CombinedMap';
 
 function App() {
   const [stats, setStats] = useState(null);
@@ -40,6 +41,9 @@ function App() {
     </div>
   );
 
+  const filterWord = stats.config?.filter_word || 'Run';
+  const sportTheme = getSport(filterWord);
+
   return (
     <div>
       {/* HEADER */}
@@ -56,6 +60,13 @@ function App() {
         <section id="recent-activities">
           <p className="section-heading">Recent Activities</p>
           <ActivityCarousel activities={stats.last_10_activities} />
+        </section>
+      )}
+
+      {/* COMBINED HEATMAP */}
+      {stats.all_polylines?.length > 0 && (
+        <section id="heatmap-section">
+          <CombinedMap polylines={stats.all_polylines} color={sportTheme.color} />
         </section>
       )}
     </div>
