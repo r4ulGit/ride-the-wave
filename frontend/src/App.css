@@ -196,7 +196,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.activities-strip::-webkit-scrollbar { display: none; }
+.activities-strip::-webkit-scrollbar { display: block; height: 4px; }
+.activities-strip::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 2px; }
+.activities-strip::-webkit-scrollbar-thumb { background: rgba(252,76,2,0.45); border-radius: 2px; }
+.activities-strip::-webkit-scrollbar-thumb:hover { background: rgba(252,76,2,0.75); }
 
 /* --- ACTIVITY CARD --- */
 .activity-card {
@@ -207,7 +210,7 @@
   overflow: hidden;
   border-radius: var(--radius-xl);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  cursor: default;
+  cursor: pointer;
   height: 540px;
 }
 

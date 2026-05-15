@@ -143,12 +143,12 @@ function formatNum(n, dec = 1) {
 }
 
 // --- ACTIVITY CARD ---
-function ActivityCard({ act }) {
+function ActivityCard({ act, onCenterMe }) {
   const sport = getSport(act.sport_type);
   const isRun = act.sport_type?.toLowerCase().includes('run');
 
   return (
-    <div className="activity-card glass-card animate-in">
+    <div className="activity-card glass-card animate-in" onClick={onCenterMe}>
       {/* Route map */}
       <div className="card-map">
         <RouteMap polyline={act.summary_polyline} color={sport.color} />
@@ -257,11 +257,25 @@ function ActivityCarousel({ activities }) {
     }, 120);
   };
 
+  // Click a card → smooth-scroll to center it
+  const handleCardClick = (index) => {
+    const strip = stripRef.current;
+    if (!strip) return;
+    const child = strip.children[index];
+    if (!child) return;
+    const target = child.offsetLeft - (strip.clientWidth - child.offsetWidth) / 2;
+    strip.scrollTo({ left: target, behavior: 'smooth' });
+  };
+
   return (
     <div className="carousel-wrapper">
       <div className="activities-strip" ref={stripRef} onScroll={handleScroll}>
         {items.map((act, i) => (
-          <ActivityCard key={`${act.id || act.title}-${i}`} act={act} />
+          <ActivityCard
+            key={`${act.id || act.title}-${i}`}
+            act={act}
+            onCenterMe={() => handleCardClick(i)}
+          />
         ))}
       </div>
     </div>
