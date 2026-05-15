@@ -1,316 +1,291 @@
 import { useState, useEffect } from 'react'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import './App.css'
 
-// API CONFIGURATION
-const API_URL = import.meta.env.DEV 
-  ? "http://127.0.0.1:5000/" 
-  : "https://4gep4vk4j4tdbl2uhx2pdu5gt40hkcvy.lambda-url.eu-west-1.on.aws/";
+// --- API CONFIGURATION ---
+const API_URL = "https://4gep4vk4j4tdbl2uhx2pdu5gt40hkcvy.lambda-url.eu-west-1.on.aws/";
 
-// --- HELPERS ---
+// --- SPORT CONFIG ---
 const SPORT_CONFIG = {
-  Run:       { icon: '🏃', color: '#fc4c02' },
-  Ride:      { icon: '🚴', color: '#3b82f6' },
-  Swim:      { icon: '🏊', color: '#06b6d4' },
-  Hike:      { icon: '🥾', color: '#22c55e' },
-  Walk:      { icon: '🚶', color: '#84cc16' },
-  Workout:   { icon: '💪', color: '#a855f7' },
-  Yoga:      { icon: '🧘', color: '#ec4899' },
-  Default:   { icon: '⚡', color: '#f59e0b' },
+  Run:     { icon: '🏃', color: '#fc4c02', label: 'Run' },
+  Ride:    { icon: '🚴', color: '#3b82f6', label: 'Ride' },
+  Swim:    { icon: '🏊', color: '#06b6d4', label: 'Swim' },
+  Hike:    { icon: '🥾', color: '#22c55e', label: 'Hike' },
+  Walk:    { icon: '🚶', color: '#84cc16', label: 'Walk' },
+  Workout: { icon: '💪', color: '#a855f7', label: 'Workout' },
+  Yoga:    { icon: '🧘', color: '#ec4899', label: 'Yoga' },
+  Default: { icon: '⚡', color: '#f59e0b', label: 'Activity' },
 };
 
-function getSportConfig(sportType) {
+function getSport(sportType) {
   return SPORT_CONFIG[sportType] || SPORT_CONFIG.Default;
 }
 
+// --- POLYLINE DECODER ---
+// Implements the Google Encoded Polyline Algorithm
+function decodePolyline(encoded) {
+  if (!encoded) return [];
+  const points = [];
+  let index = 0, lat = 0, lng = 0;
+  while (index < encoded.length) {
+    let shift = 0, result = 0, b;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    shift = 0; result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    points.push([lat / 1e5, lng / 1e5]);
+  }
+  return points;
+}
+
+// --- ROUTE MAP COMPONENT ---
+// Converts decoded lat/lng points into a normalized SVG path
+function RouteMap({ polyline, color }) {
+  const points = decodePolyline(polyline);
+
+  if (points.length < 2) {
+    return (
+      <div className="card-map-empty">
+        {getSport('Default').icon}
+      </div>
+    );
+  }
+
+  const lats = points.map(p => p[0]);
+  const lngs = points.map(p => p[1]);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+
+  // Padding inside the SVG viewBox
+  const pad = 10;
+  const W = 300, H = 160;
+
+  const latRange = maxLat - minLat || 0.001;
+  const lngRange = maxLng - minLng || 0.001;
+
+  // Keep aspect ratio — fit the route without distortion
+  const scaleX = (W - pad * 2) / lngRange;
+  const scaleY = (H - pad * 2) / latRange;
+  const scale  = Math.min(scaleX, scaleY);
+
+  const offsetX = (W - lngRange * scale) / 2;
+  const offsetY = (H - latRange * scale) / 2;
+
+  const toX = lng => offsetX + (lng - minLng) * scale;
+  // SVG Y increases downward, latitude increases upward — flip it
+  const toY = lat => H - offsetY - (lat - minLat) * scale;
+
+  const d = points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p[1]).toFixed(1)},${toY(p[0]).toFixed(1)}`)
+    .join(' ');
+
+  // Start and end markers
+  const startX = toX(points[0][1]);
+  const startY = toY(points[0][0]);
+  const endX   = toX(points[points.length - 1][1]);
+  const endY   = toY(points[points.length - 1][0]);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg">
+      {/* Background */}
+      <rect width={W} height={H} fill="rgba(0,0,0,0.4)" />
+
+      {/* Glow under the route */}
+      <path d={d} fill="none" stroke={color} strokeWidth="5" strokeOpacity="0.15"
+        strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Main route line */}
+      <path d={d} fill="none" stroke={color} strokeWidth="2.5"
+        strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Start dot */}
+      <circle cx={startX} cy={startY} r="4" fill={color} opacity="0.9" />
+      <circle cx={startX} cy={startY} r="7" fill={color} opacity="0.2" />
+
+      {/* End dot */}
+      <circle cx={endX} cy={endY} r="4" fill="white" opacity="0.9" />
+      <circle cx={endX} cy={endY} r="7" fill="white" opacity="0.2" />
+    </svg>
+  );
+}
+
+// --- HELPERS ---
 function formatDate(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  if (isNaN(d)) return '';
-  return d.toLocaleDateString('es-ES', { 
-    day: '2-digit', month: 'short', year: 'numeric' 
-  });
+  return isNaN(d) ? '' : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 }
 
-function formatNumber(num, decimals = 0) {
-  return (num || 0).toLocaleString('en-US', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals
-  });
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-// --- CUSTOM TOOLTIP FOR CHART ---
-function CustomTooltip({ active, payload, label }) {
-  if (active && payload && payload.length) {
-    return (
-      <div style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-sm)',
-        padding: '0.75rem 1rem',
-        boxShadow: 'var(--shadow-card)',
-      }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: 4 }}>{label}</p>
-        <p style={{ color: 'var(--strava-orange)', fontWeight: 700, fontSize: '1rem' }}>
-          {formatNumber(payload[0].value, 1)} km
-        </p>
-        {payload[0].payload.count && (
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: 2 }}>
-            {payload[0].payload.count} activities
-          </p>
-        )}
+function formatPace(speedMs) {
+  if (!speedMs || speedMs === 0) return '—';
+  const s = 1000 / speedMs;
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+}
+
+function formatNum(n, dec = 1) {
+  return (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+// --- ACTIVITY CARD ---
+function ActivityCard({ act }) {
+  const sport = getSport(act.sport_type);
+  const isRun = act.sport_type?.toLowerCase().includes('run');
+
+  return (
+    <div className="activity-card glass-card animate-in">
+      {/* Route map */}
+      <div className="card-map">
+        <RouteMap polyline={act.summary_polyline} color={sport.color} />
       </div>
-    );
-  }
-  return null;
+
+      {/* Card body */}
+      <div className="card-body">
+        {/* Sport + date row */}
+        <div className="card-sport-row">
+          <div className="card-sport-dot" style={{ background: sport.color }} />
+          <span className="card-sport-label" style={{ color: sport.color }}>{sport.label}</span>
+          <span className="card-date">{formatDate(act.date_local || act.date)}</span>
+        </div>
+
+        {/* Title */}
+        <div className="card-title">{act.title}</div>
+
+        {/* Stats grid */}
+        <div className="card-stats">
+          <div className="card-stat">
+            <span className="card-stat-value">{formatNum(act.distance_km)} <span style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>km</span></span>
+            <span className="card-stat-label">Distance</span>
+          </div>
+          <div className="card-stat">
+            <span className="card-stat-value">{formatDuration(act.moving_time_seconds)}</span>
+            <span className="card-stat-label">Time</span>
+          </div>
+          <div className="card-stat">
+            {isRun ? (
+              <>
+                <span className="card-stat-value" style={{fontSize:'0.85rem'}}>{formatPace(act.average_speed)}</span>
+                <span className="card-stat-label">/km</span>
+              </>
+            ) : (
+              <>
+                <span className="card-stat-value">{formatNum(act.total_elevation_gain, 0)} <span style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>m</span></span>
+                <span className="card-stat-label">Elevation</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Device + kudos */}
+        <div className="card-bottom-row">
+          <span className="card-device">📱 {act.device_name !== 'Unknown' ? act.device_name : '—'}</span>
+          {act.kudos_count > 0 && (
+            <span className="card-kudos">👏 {act.kudos_count}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
+// --- MAIN APP ---
 function App() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // --- WIDGET DETECTION ---
-  const searchParams = new URLSearchParams(window.location.search);
-  const isWidget = searchParams.get('mode') === 'widget';
+  const [error, setError]   = useState(null);
 
   useEffect(() => {
     fetch(API_URL)
-      .then(response => {
-        if (!response.ok) {
-          return response.text().then(text => { throw new Error(text || 'Network response was not ok') });
-        }
-        return response.json();
+      .then(r => {
+        if (!r.ok) return r.text().then(t => { throw new Error(t || 'Network error') });
+        return r.json();
       })
       .then(data => {
-        if (typeof data.total_km === 'undefined') {
-          throw new Error("Backend format error: Missing 'total_km'.");
-        }
+        if (typeof data.total_km === 'undefined') throw new Error("Bad API response");
         setStats(data);
         setLoading(false);
       })
-      .catch(error => {
-        console.error("Error fetching data:", error);
-        setError(error.message);
-        setLoading(false);
-      });
+      .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  // --- LOADING STATE ---
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner" />
-        <span className="loading-text">Loading your activities...</span>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="loading-screen">
+      <div className="loading-spinner" />
+      <span className="loading-text">Loading your activities...</span>
+    </div>
+  );
 
-  // --- ERROR STATE ---
-  if (error) {
-    return (
-      <div className="error-screen">
-        <div>
-          <span style={{ fontSize: '2rem', display: 'block', marginBottom: '1rem' }}>😵</span>
-          <strong>Error loading data</strong>
-          <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', opacity: 0.7 }}>{error}</p>
-        </div>
+  if (error) return (
+    <div className="error-screen">
+      <div>
+        <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>😵</span>
+        <strong>Error loading data</strong>
+        <p style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.6 }}>{error}</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  const goal = stats.config?.goal_km || 500;
-  const filteredKm = stats.filtered_km || 0;
-  const percentage = Math.min(Math.max((filteredKm / goal) * 100, 0), 100);
+  const goal        = stats.config?.goal_km || 500;
+  const filteredKm  = stats.filtered_km || 0;
+  const pct         = Math.min(Math.max((filteredKm / goal) * 100, 0), 100);
+  const filterWord  = stats.config?.filter_word || 'Run';
 
   return (
-    <div className={isWidget ? 'widget-mode' : ''}>
-      
-      {/* --- HEADER --- */}
-      <header className="app-header" id="app-header">
+    <div>
+      {/* HEADER */}
+      <header className="app-header">
         <h1 className="app-title">🌊 Ride the Wave</h1>
-        <p className="app-subtitle">Personal Strava Activity Dashboard</p>
+        <p className="app-subtitle">Strava Activity Dashboard</p>
       </header>
 
-      {/* --- HERO STATS --- */}
-      <section className="hero-stats" id="hero-stats">
-        <div className="stat-card animate-in">
-          <div className="stat-icon">📏</div>
-          <div className="stat-label">Total Distance</div>
-          <div className="stat-value">
-            {formatNumber(stats.total_km, 1)}
-            <span className="stat-unit">km</span>
-          </div>
-        </div>
-        <div className="stat-card animate-in">
-          <div className="stat-icon">🏋️</div>
-          <div className="stat-label">Activities</div>
-          <div className="stat-value">{stats.total_activities || 0}</div>
-        </div>
-        <div className="stat-card animate-in">
-          <div className="stat-icon">⛰️</div>
-          <div className="stat-label">Elevation Gain</div>
-          <div className="stat-value">
-            {formatNumber(stats.total_elevation, 0)}
-            <span className="stat-unit">m</span>
-          </div>
-        </div>
-        <div className="stat-card animate-in">
-          <div className="stat-icon">⏱️</div>
-          <div className="stat-label">Total Time</div>
-          <div className="stat-value" style={{ fontSize: '1.5rem' }}>
-            {stats.total_time_display || '0m'}
-          </div>
-        </div>
-      </section>
-
-      {/* --- PROGRESS BAR --- */}
-      <section className="progress-section animate-in" id="progress-section">
+      {/* PROGRESS BAR */}
+      <section className="progress-section glass-card animate-in" id="progress-section">
         <div className="progress-header">
-          <span className="progress-title">
-            {stats.config?.filter_word || 'Run'} Goal Progress
-          </span>
-          <span className="progress-goal">
-            Goal: {formatNumber(goal)} km
-          </span>
-        </div>
-        
-        <div className="progress-track" style={{ position: 'relative' }}>
-          <div 
-            className="progress-fill" 
-            style={{ width: `${percentage}%` }}
-          />
-          <div 
-            className="progress-runner"
-            style={{ left: `${percentage}%` }}
-          >
-            🏃
+          <span className="progress-title">{filterWord} Goal</span>
+          <div className="progress-numbers">
+            <span className="progress-current">{formatNum(filteredKm)}</span>
+            <span className="progress-goal">/ {formatNum(goal, 0)} km</span>
           </div>
         </div>
-        
-        <div className="progress-info">
-          <span>{formatNumber(filteredKm, 1)} km</span>
-          <span className="progress-percentage">{percentage.toFixed(1)}%</span>
-          <span>{formatNumber(goal - filteredKm, 1)} km remaining</span>
+
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${pct}%` }} />
+          <div className="progress-runner" style={{ left: `${pct}%` }}>🏃</div>
+        </div>
+
+        <div className="progress-footer">
+          <span>0 km</span>
+          <span className="progress-pct">{pct.toFixed(1)}%</span>
+          <span>{formatNum(goal - filteredKm)} km to go</span>
         </div>
       </section>
 
-      {/* --- CONTENT GRID: CHART + SPORT BREAKDOWN --- */}
-      <div className="content-grid">
-        
-        {/* Weekly Chart */}
-        <div className="section-card animate-in" id="weekly-chart">
-          <h2 className="section-title">
-            <span className="title-icon">📊</span>
-            Weekly Distance
-          </h2>
-          {stats.weekly_chart && stats.weekly_chart.length > 0 ? (
-            <div className="chart-container">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stats.weekly_chart} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="week" 
-                    tick={{ fill: '#666677', fontSize: 11 }}
-                    axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#666677', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={40}
-                  />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                  <Bar 
-                    dataKey="distance_km" 
-                    fill="var(--strava-orange)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="chart-empty">No weekly data available yet</div>
-          )}
-        </div>
-
-        {/* Sport Breakdown */}
-        <div className="section-card animate-in" id="sport-breakdown">
-          <h2 className="section-title">
-            <span className="title-icon">🏅</span>
-            By Sport
-          </h2>
-          <div className="sport-list">
-            {stats.sport_breakdown && stats.sport_breakdown.map((sport) => {
-              const config = getSportConfig(sport.sport);
-              return (
-                <div className="sport-item" key={sport.sport}>
-                  <div className="sport-dot" style={{ background: config.color }} />
-                  <div style={{ fontSize: '1.2rem', flexShrink: 0 }}>{config.icon}</div>
-                  <div className="sport-info">
-                    <div className="sport-name">{sport.sport}</div>
-                    <div className="sport-meta">
-                      {sport.count} activities · {sport.time_display} · ⛰️ {formatNumber(sport.elevation)}m
-                    </div>
-                  </div>
-                  <div className="sport-distance">
-                    {formatNumber(sport.distance_km, 1)}
-                    <span className="unit"> km</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* --- RECENT ACTIVITIES --- */}
-      {stats.last_10_activities && stats.last_10_activities.length > 0 && (
-        <section className="activities-section section-card animate-in" id="recent-activities">
-          <h2 className="section-title">
-            <span className="title-icon">🕐</span>
-            Recent Activities
-          </h2>
-          <div className="activity-list">
-            {stats.last_10_activities.map((act, index) => {
-              const config = getSportConfig(act.sport_type);
-              return (
-                <div className="activity-item animate-in" key={act.id || index}>
-                  <div 
-                    className="activity-sport-badge"
-                    style={{ background: `${config.color}20` }}
-                  >
-                    {config.icon}
-                  </div>
-                  <div className="activity-details">
-                    <div className="activity-title">{act.title}</div>
-                    <div className="activity-meta">
-                      <span>{formatDate(act.date_local || act.date)}</span>
-                      <span>{act.moving_time_display}</span>
-                      {act.pace && <span>⚡ {act.pace} /km</span>}
-                      {act.total_elevation_gain > 0 && (
-                        <span>⛰️ {formatNumber(act.total_elevation_gain)}m</span>
-                      )}
-                      {act.kudos_count > 0 && <span>👏 {act.kudos_count}</span>}
-                    </div>
-                  </div>
-                  <div className="activity-stats">
-                    <div className="activity-stat">
-                      <div className="activity-stat-value">
-                        {formatNumber(act.distance_km, 2)}
-                      </div>
-                      <div className="activity-stat-label">km</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+      {/* RECENT ACTIVITIES HORIZONTAL SCROLL */}
+      {stats.last_10_activities?.length > 0 && (
+        <section id="recent-activities">
+          <p className="section-heading">Recent Activities</p>
+          <div className="activities-strip">
+            {stats.last_10_activities.map((act, i) => (
+              <ActivityCard key={act.id || i} act={act} />
+            ))}
           </div>
         </section>
       )}
-
     </div>
   );
 }
