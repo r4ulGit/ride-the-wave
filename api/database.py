@@ -13,11 +13,7 @@ try:
             aws_secret_access_key='dummy'
         )
     else:
-        kwargs = {'region_name': config.AWS_REGION}
-        if config.AWS_ACCESS_KEY_ID and config.AWS_SECRET_ACCESS_KEY:
-            kwargs['aws_access_key_id'] = config.AWS_ACCESS_KEY_ID
-            kwargs['aws_secret_access_key'] = config.AWS_SECRET_ACCESS_KEY
-        dynamodb = boto3.resource('dynamodb', **kwargs)
+        dynamodb = boto3.resource('dynamodb', region_name=config.AWS_REGION)
 
     table = dynamodb.Table(config.DYNAMODB_TABLE_NAME)
 except Exception as e:
