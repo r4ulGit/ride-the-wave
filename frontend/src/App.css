@@ -225,13 +225,11 @@
   flex: 0 0 315px;
   background: rgba(0,0,0,0.35);
   position: relative;
-  overflow: hidden;
+  /* NOTE: overflow:hidden removed — it clips Leaflet's SVG overlay pane.
+     The parent .activity-card already clips via its own overflow:hidden. */
 }
 
-.card-map svg {
-  width: 100%;
-  height: 100%;
-}
+
 
 /* Leaflet map fills the card-map container */
 .card-map .leaflet-container {

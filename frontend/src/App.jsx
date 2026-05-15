@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline } from 'react-leaflet'
+import L from 'leaflet'
 import './App.css'
 
 // --- API CONFIGURATION ---
@@ -49,18 +49,49 @@ function decodePolyline(encoded) {
   return points;
 }
 
-// --- ROUTE MAP COMPONENT (Leaflet / react-leaflet v5) ---
+// --- ROUTE MAP COMPONENT (raw Leaflet API) ---
 function RouteMap({ polyline, color }) {
+  const containerRef = useRef(null);
   const positions = decodePolyline(polyline);
-  const mapRef = useRef(null);
 
-  // Fit map to route bounds after the map mounts
   useEffect(() => {
-    const map = mapRef.current;
-    if (map && positions.length > 1) {
-      map.fitBounds(positions, { padding: [20, 20] });
-    }
-  }, [polyline]);
+    const container = containerRef.current;
+    if (!container || positions.length < 2) return;
+
+    // Create Leaflet map
+    const map = L.map(container, {
+      zoomControl:       false,
+      scrollWheelZoom:   false,
+      dragging:          false,
+      doubleClickZoom:   false,
+      touchZoom:         false,
+      keyboard:          false,
+      attributionControl: false,
+    });
+
+    // CartoDB Dark Matter tiles — free, no API key, dark theme
+    L.tileLayer(
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      { maxZoom: 19 }
+    ).addTo(map);
+
+    // Glow + main route line
+    L.polyline(positions, { color, weight: 8,   opacity: 0.18, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+    L.polyline(positions, { color, weight: 3,   opacity: 1.0,  lineCap: 'round', lineJoin: 'round' }).addTo(map);
+
+    // Let the browser paint the container first, then fit bounds
+    const rafId = requestAnimationFrame(() => {
+      map.invalidateSize();
+      map.fitBounds(L.latLngBounds(positions), { padding: [20, 20] });
+    });
+
+    // Cleanup — cancel RAF BEFORE map.remove() so RAF never fires on a dead map
+    // (React 18 StrictMode runs effects twice: create→destroy→create)
+    return () => {
+      cancelAnimationFrame(rafId);
+      map.remove();
+    };
+  }, [polyline, color]);
 
   if (positions.length < 2) {
     return (
@@ -70,39 +101,7 @@ function RouteMap({ polyline, color }) {
     );
   }
 
-  // Midpoint as initial center estimate (replaced by fitBounds above)
-  const mid = positions[Math.floor(positions.length / 2)];
-
-  return (
-    <MapContainer
-      ref={mapRef}
-      center={mid}
-      zoom={14}
-      style={{ width: '100%', height: '100%' }}
-      zoomControl={false}
-      scrollWheelZoom={false}
-      dragging={false}
-      doubleClickZoom={false}
-      touchZoom={false}
-      keyboard={false}
-      attributionControl={false}
-    >
-      {/* CartoDB Dark Matter — free, no API key, matches dark theme */}
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      />
-
-      {/* In react-leaflet v5, style props must go in pathOptions */}
-      <Polyline
-        positions={positions}
-        pathOptions={{ color: color, weight: 8, opacity: 0.2, lineCap: 'round', lineJoin: 'round' }}
-      />
-      <Polyline
-        positions={positions}
-        pathOptions={{ color: color, weight: 3, opacity: 1.0, lineCap: 'round', lineJoin: 'round' }}
-      />
-    </MapContainer>
-  );
+  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }
 
 // --- HELPERS ---
