@@ -140,7 +140,8 @@ def process_activities(event, context):
                 "kudos_count": kudos,
                 "device_name": item.get('device_name', 'Unknown'),
                 "date": item.get('start_date'),
-                "date_local": item.get('start_date_local', item.get('start_date'))
+                "date_local": item.get('start_date_local', item.get('start_date')),
+                "summary_polyline": item.get('summary_polyline', ''),
             }
             
             # Add pace for running activities

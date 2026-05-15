@@ -43,6 +43,12 @@ def save_activity(activity):
             'achievement_count': int(activity.get('achievement_count', 0)),
             'device_name': activity.get('device_name', 'Unknown'),
         }
+
+        # 3b. Extract summary_polyline from the map object (if present)
+        map_data = activity.get('map', {})
+        summary_polyline = map_data.get('summary_polyline', '')
+        if summary_polyline:
+            item['summary_polyline'] = summary_polyline
         
         # 4. Insert with Condition (Fail if exists to preserve original date)
         table.put_item(
