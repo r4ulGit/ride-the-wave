@@ -1,4 +1,5 @@
 import requests
+import time
 import config
 
 def refresh_access_token():
@@ -25,17 +26,23 @@ def refresh_access_token():
 
 def get_athlete_activities(access_token, per_page=200, max_pages=5):
     """
-    Fetches the most recent activities for the authenticated ATHLETE.
-    Uses pagination to retrieve up to max_pages * per_page activities.
-    
-    Unlike the club endpoint, the athlete endpoint returns full activity
-    details including real activity IDs, speeds, elevation, device info, etc.
+    Fetches activities from the last 7 days for the authenticated ATHLETE.
+    Uses before/after epoch timestamps (same logic as the Bruno pre-request script)
+    and paginates through results until there are no more activities.
+    Duplicate prevention is handled at the DB layer (condition on activity_id).
     """
     headers = {'Authorization': f'Bearer {access_token}'}
     all_activities = []
+
+    # Calculate time window: now and 7 days ago (in Unix epoch seconds)
+    now = int(time.time())
+    seven_days_ago = now - (7 * 24 * 60 * 60)
+    print(f"📅 Fetching activities from {seven_days_ago} to {now} (last 7 days)")
     
     for page in range(1, max_pages + 1):
         params = {
+            'before': now,
+            'after': seven_days_ago,
             'per_page': per_page,
             'page': page
         }
