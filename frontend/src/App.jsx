@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { MapContainer, TileLayer, Polyline, useMap } from 'react-leaflet'
 import './App.css'
 
 // --- API CONFIGURATION ---
@@ -48,12 +49,23 @@ function decodePolyline(encoded) {
   return points;
 }
 
-// --- ROUTE MAP COMPONENT ---
-// Converts decoded lat/lng points into a normalized SVG path
-function RouteMap({ polyline, color }) {
-  const points = decodePolyline(polyline);
+// --- FIT BOUNDS HELPER ---
+// Zooms the Leaflet map to fit the full route after render
+function FitBounds({ positions }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions && positions.length > 1) {
+      map.fitBounds(positions, { padding: [18, 18] });
+    }
+  }, [map]);
+  return null;
+}
 
-  if (points.length < 2) {
+// --- ROUTE MAP COMPONENT (Leaflet) ---
+function RouteMap({ polyline, color, activityId }) {
+  const positions = decodePolyline(polyline);
+
+  if (positions.length < 2) {
     return (
       <div className="card-map-empty">
         {getSport('Default').icon}
@@ -61,61 +73,35 @@ function RouteMap({ polyline, color }) {
     );
   }
 
-  const lats = points.map(p => p[0]);
-  const lngs = points.map(p => p[1]);
-  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
-
-  // Padding inside the SVG viewBox
-  const pad = 10;
-  const W = 300, H = 160;
-
-  const latRange = maxLat - minLat || 0.001;
-  const lngRange = maxLng - minLng || 0.001;
-
-  // Keep aspect ratio — fit the route without distortion
-  const scaleX = (W - pad * 2) / lngRange;
-  const scaleY = (H - pad * 2) / latRange;
-  const scale  = Math.min(scaleX, scaleY);
-
-  const offsetX = (W - lngRange * scale) / 2;
-  const offsetY = (H - latRange * scale) / 2;
-
-  const toX = lng => offsetX + (lng - minLng) * scale;
-  // SVG Y increases downward, latitude increases upward — flip it
-  const toY = lat => H - offsetY - (lat - minLat) * scale;
-
-  const d = points
-    .map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p[1]).toFixed(1)},${toY(p[0]).toFixed(1)}`)
-    .join(' ');
-
-  // Start and end markers
-  const startX = toX(points[0][1]);
-  const startY = toY(points[0][0]);
-  const endX   = toX(points[points.length - 1][1]);
-  const endY   = toY(points[points.length - 1][0]);
+  // A center estimate (midpoint of route) for initial render before FitBounds runs
+  const mid = positions[Math.floor(positions.length / 2)];
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} xmlns="http://www.w3.org/2000/svg">
-      {/* Background */}
-      <rect width={W} height={H} fill="rgba(0,0,0,0.4)" />
+    <MapContainer
+      key={activityId}
+      center={mid}
+      zoom={13}
+      style={{ width: '100%', height: '100%' }}
+      zoomControl={false}
+      scrollWheelZoom={false}
+      dragging={false}
+      doubleClickZoom={false}
+      touchZoom={false}
+      keyboard={false}
+      attributionControl={false}
+    >
+      {/* CartoDB Dark Matter — free, no API key, matches dark theme */}
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+      />
 
-      {/* Glow under the route */}
-      <path d={d} fill="none" stroke={color} strokeWidth="5" strokeOpacity="0.15"
-        strokeLinecap="round" strokeLinejoin="round" />
+      {/* Route polyline with glow effect via two overlapping lines */}
+      <Polyline positions={positions} color={color} weight={6}  opacity={0.15} />
+      <Polyline positions={positions} color={color} weight={2.5} opacity={0.95} />
 
-      {/* Main route line */}
-      <path d={d} fill="none" stroke={color} strokeWidth="2.5"
-        strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* Start dot */}
-      <circle cx={startX} cy={startY} r="4" fill={color} opacity="0.9" />
-      <circle cx={startX} cy={startY} r="7" fill={color} opacity="0.2" />
-
-      {/* End dot */}
-      <circle cx={endX} cy={endY} r="4" fill="white" opacity="0.9" />
-      <circle cx={endX} cy={endY} r="7" fill="white" opacity="0.2" />
-    </svg>
+      {/* Auto-fit map to route bounds */}
+      <FitBounds positions={positions} />
+    </MapContainer>
   );
 }
 
@@ -151,7 +137,7 @@ function ActivityCard({ act, onCenterMe }) {
     <div className="activity-card glass-card animate-in" onClick={onCenterMe}>
       {/* Route map */}
       <div className="card-map">
-        <RouteMap polyline={act.summary_polyline} color={sport.color} />
+        <RouteMap polyline={act.summary_polyline} color={sport.color} activityId={act.id} />
       </div>
 
       {/* Card body */}

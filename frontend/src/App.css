@@ -233,6 +233,23 @@
   height: 100%;
 }
 
+/* Leaflet map fills the card-map container */
+.card-map .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  background: #0d0d12;
+  border-radius: 0;
+}
+
+/* Keep Leaflet tiles below the card body */
+.card-map .leaflet-pane {
+  z-index: 1;
+}
+.card-map .leaflet-top,
+.card-map .leaflet-bottom {
+  z-index: 2;
+}
+
 .card-map-empty {
   display: flex;
   align-items: center;
