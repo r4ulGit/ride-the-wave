@@ -241,15 +241,6 @@
   border-radius: 0;
 }
 
-/* Keep Leaflet tiles below the card body */
-.card-map .leaflet-pane {
-  z-index: 1;
-}
-.card-map .leaflet-top,
-.card-map .leaflet-bottom {
-  z-index: 2;
-}
-
 .card-map-empty {
   display: flex;
   align-items: center;
