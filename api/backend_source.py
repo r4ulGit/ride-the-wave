@@ -5,12 +5,14 @@ from pathlib import Path
 from decimal import Decimal
 from datetime import datetime, timedelta
 from collections import defaultdict
-from dotenv import load_dotenv
-
-# --- VARIABLE LOADING ---
-current_dir = Path(__file__).resolve().parent
-env_path = current_dir / '.env'
-load_dotenv(dotenv_path=env_path)
+try:
+    from dotenv import load_dotenv
+    # --- VARIABLE LOADING ---
+    current_dir = Path(__file__).resolve().parent
+    env_path = current_dir / '.env'
+    load_dotenv(dotenv_path=env_path)
+except ImportError:
+    pass
 
 # --- CONFIGURATION ---
 DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'strava_athlete_activities')
