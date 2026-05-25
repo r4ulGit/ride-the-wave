@@ -3,30 +3,30 @@
    ==================================== */
 
 :root {
-  /* Core palette */
-  --strava-orange: #fc4c02;
-  --strava-orange-light: #ff6b2b;
-  --strava-orange-dark: #e04400;
+  /* Core palette - Teal #62c0bb instead of Strava Orange */
+  --strava-orange: #62c0bb;
+  --strava-orange-light: #82d0cc;
+  --strava-orange-dark: #43aaa4;
 
-  /* Dark background */
-  --bg-primary: #0d0d12;
-  --bg-secondary: #13131c;
+  /* Crisp Light Background */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
 
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-bg-hover: rgba(255, 255, 255, 0.07);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-border-hover: rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --glass-blur: blur(16px);
+  /* Light Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-hover: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(98, 192, 187, 0.18);
+  --glass-border-hover: rgba(98, 192, 187, 0.35);
+  --glass-shadow: 0 10px 30px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.01);
+  --glass-blur: 12px;
 
-  /* Text */
-  --text-primary: #f0f0f5;
-  --text-secondary: #9999aa;
-  --text-muted: #55556a;
+  /* Typography Colors - slate suite */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
 
   /* Sport colors */
-  --color-run: #fc4c02;
+  --color-run: #62c0bb;
   --color-ride: #3b82f6;
   --color-swim: #06b6d4;
   --color-hike: #22c55e;
@@ -38,7 +38,7 @@
   --radius-lg: 20px;
   --radius-xl: 28px;
 
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Racing Sans One', 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   color: var(--text-primary);
   background-color: var(--bg-primary);
@@ -53,8 +53,8 @@ body {
   min-height: 100vh;
   background: var(--bg-primary);
   background-image:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(252, 76, 2, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(59, 130, 246, 0.07) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(98, 192, 187, 0.15) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
 }
 
 #root {
@@ -65,6 +65,6 @@ body {
 
 ::-webkit-scrollbar { height: 4px; width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(98, 192, 187, 0.25); border-radius: 2px; }
 
-::selection { background: rgba(252, 76, 2, 0.3); color: var(--text-primary); }
+::selection { background: rgba(98, 192, 187, 0.25); color: var(--text-primary); }

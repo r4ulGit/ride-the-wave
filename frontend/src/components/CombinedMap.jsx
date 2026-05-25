@@ -23,9 +23,9 @@ export function CombinedMap({ polylines, color }) {
       attributionControl: false,
     });
 
-    // CartoDB Dark Matter tiles
+    // CartoDB Positron (Light) tiles
     L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
       { maxZoom: 19 }
     ).addTo(map);
 
@@ -65,10 +65,9 @@ export function CombinedMap({ polylines, color }) {
   }
 
   return (
-    <div className="combined-map-wrapper glass-card animate-in" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column' }}>
-      <div className="card-body" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div className="card-title">Global Heatmap</div>
-        <div className="card-stat-label">All your routes combined into a single map</div>
+    <div className="combined-map-wrapper glass-card animate-in" style={{ display: 'flex', flexDirection: 'column', marginBottom: '2.5rem' }}>
+      <div className="card-body" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+        <div className="card-title">Progreso actual</div>
       </div>
       <div className="card-map" style={{ height: '400px', width: '100%', position: 'relative' }}>
         <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
