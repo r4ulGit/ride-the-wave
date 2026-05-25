@@ -26,17 +26,24 @@ def save_activity(activity):
     Returns True if saved, False if skipped or error.
     """
     try:
-        # 1. Use real Strava activity ID (always available from athlete endpoint)
+        # 1. Discard activity if it does not have a valid route polyline (null, empty, or whitespace)
+        map_data = activity.get('map')
+        summary_polyline = map_data.get('summary_polyline') if isinstance(map_data, dict) else None
+        if not summary_polyline or not str(summary_polyline).strip():
+            print(f"⏭️ Discarded (No polyline route map): {activity.get('name', 'Unknown')}")
+            return False
+
+        # 2. Use real Strava activity ID (always available from athlete endpoint)
         activity_id = str(activity['id'])
 
-        # 2. Handle Date
+        # 3. Handle Date
         start_date = activity.get('start_date')
         if not start_date:
             start_date = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
         
         start_date_local = activity.get('start_date_local', start_date)
 
-        # 3. Create Item with enriched athlete data
+        # 4. Create Item with enriched athlete data (excluding device_name as requested)
         item = {
             'activity_id': activity_id,
             'title': activity.get('name', 'Unknown'),
@@ -52,16 +59,10 @@ def save_activity(activity):
             'max_speed': Decimal(str(round(activity.get('max_speed', 0), 1))),
             'kudos_count': int(activity.get('kudos_count', 0)),
             'achievement_count': int(activity.get('achievement_count', 0)),
-            'device_name': activity.get('device_name', 'Unknown'),
+            'summary_polyline': summary_polyline
         }
-
-        # 3b. Extract summary_polyline from the map object (if present)
-        map_data = activity.get('map', {})
-        summary_polyline = map_data.get('summary_polyline', '')
-        if summary_polyline:
-            item['summary_polyline'] = summary_polyline
         
-        # 4. Insert with Condition (Fail if exists to preserve original date)
+        # 5. Insert with Condition (Fail if exists to preserve original date)
         table.put_item(
             Item=item,
             ConditionExpression='attribute_not_exists(activity_id)'
