@@ -34,15 +34,29 @@ def get_athlete_activities(access_token, per_page=200, max_pages=5):
     headers = {'Authorization': f'Bearer {access_token}'}
     all_activities = []
 
-    # Calculate time window: now and 7 days ago (in Unix epoch seconds)
+    # Calculate time window: now and starting date (in Unix epoch seconds)
     now = int(time.time())
-    seven_days_ago = now - (7 * 24 * 60 * 60)
-    print(f"📅 Fetching activities from {seven_days_ago} to {now} (last 7 days)")
+    
+    # Default is 7 days ago
+    start_epoch = now - (7 * 24 * 60 * 60)
+    
+    if config.START_DATE:
+        try:
+            from datetime import datetime
+            # Parse 'DD/MM/YYYY' and convert to Unix Epoch timestamp
+            dt = datetime.strptime(config.START_DATE.strip(), '%d/%m/%Y')
+            start_epoch = int(dt.timestamp())
+            print(f"📅 Fetching activities from custom START_DATE env: {config.START_DATE} -> Epoch: {start_epoch} to Now: {now}")
+        except Exception as e:
+            print(f"⚠️ Error parsing START_DATE env '{config.START_DATE}' (Expected DD/MM/YYYY): {e}")
+            print(f"📅 Falling back to default (last 7 days): {start_epoch}")
+    else:
+        print(f"📅 Fetching activities from default range: last 7 days (Epoch: {start_epoch} to Now: {now})")
     
     for page in range(1, max_pages + 1):
         params = {
             'before': now,
-            'after': seven_days_ago,
+            'after': start_epoch,
             'per_page': per_page,
             'page': page
         }
