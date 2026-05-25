@@ -45,9 +45,12 @@ strava-counter-ride-the-wave/
 
 ### Frontend (Dashboard)
 - React + Vite
-- Premium dark-themed dashboard
-- Displays: total stats, sport breakdown, progress bar, recent activities
-- Widget mode support via `?mode=widget`
+- Premium light-teal dashboard featuring **Racing Sans One** display typography.
+- Displays: total stats, sport breakdown, progress bar (Goal), and a recent activities carousel.
+- **Modular Widget Views**: Supports splitting and embedding sections of the dashboard inside standard `<iframe>` elements:
+  - `?view=map`: Renders the header title, the global route heatmap ("Progreso actual"), and the goal progress bar.
+  - `?view=activities`: Renders only the recent activities infinite carousel slider.
+- **Session-Based Request Caching**: Optimized with a 2-minute `sessionStorage` cache. When embedding both widgets concurrently on a parent webpage, they share the tab session and trigger **exactly 1 network request** to the API.
 
 ## Local Development
 
