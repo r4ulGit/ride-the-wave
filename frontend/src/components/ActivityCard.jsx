@@ -50,13 +50,7 @@ export function ActivityCard({ act, onCenterMe }) {
           </div>
         </div>
 
-        {/* Device + kudos */}
-        <div className="card-bottom-row">
-          <span className="card-device">📱 {act.device_name !== 'Unknown' ? act.device_name : '—'}</span>
-          {act.kudos_count > 0 && (
-            <span className="card-kudos">👏 {act.kudos_count}</span>
-          )}
-        </div>
+
       </div>
     </div>
   );

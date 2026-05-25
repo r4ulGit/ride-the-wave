@@ -11,6 +11,27 @@ function App() {
   const [error, setError]   = useState(null);
 
   useEffect(() => {
+    const cacheKey = 'strava_dashboard_data';
+    const cacheExpiryKey = 'strava_dashboard_data_expiry';
+    const cacheTTL = 2 * 60 * 1000; // 2-minute cache TTL
+
+    const cachedData = sessionStorage.getItem(cacheKey);
+    const cachedExpiry = sessionStorage.getItem(cacheExpiryKey);
+    const now = Date.now();
+
+    // Check if valid cache exists to prevent double requests when embedding twice
+    if (cachedData && cachedExpiry && now < parseInt(cachedExpiry, 10)) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        setStats(parsed);
+        setLoading(false);
+        return;
+      } catch (e) {
+        sessionStorage.removeItem(cacheKey);
+        sessionStorage.removeItem(cacheExpiryKey);
+      }
+    }
+
     fetch(API_URL)
       .then(r => {
         if (!r.ok) return r.text().then(t => { throw new Error(t || 'Network error') });
@@ -18,6 +39,11 @@ function App() {
       })
       .then(data => {
         if (typeof data.total_km === 'undefined') throw new Error("Bad API response");
+        
+        // Cache the retrieved data
+        sessionStorage.setItem(cacheKey, JSON.stringify(data));
+        sessionStorage.setItem(cacheExpiryKey, (Date.now() + cacheTTL).toString());
+
         setStats(data);
         setLoading(false);
       })
@@ -44,29 +70,35 @@ function App() {
   const filterWord = stats.config?.filter_word || 'Run';
   const sportTheme = getSport(filterWord);
 
+  // Parse modular view parameter
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view'); // 'map', 'activities', or null
+  const containerClass = view === 'map' ? 'view-map' : (view === 'activities' ? 'view-activities' : 'view-full');
+
   return (
-    <div>
+    <div className={containerClass}>
       {/* HEADER */}
-      <header className="app-header">
-        <h1 className="app-title">🌊 Ride the Wave</h1>
-        <p className="app-subtitle">Strava Activity Dashboard</p>
-      </header>
-
-      {/* PROGRESS BAR */}
-      <ProgressSection stats={stats} />
-
-      {/* RECENT ACTIVITIES INFINITE CAROUSEL */}
-      {stats.last_10_activities?.length > 0 && (
-        <section id="recent-activities">
-          <p className="section-heading">Recent Activities</p>
-          <ActivityCarousel activities={stats.last_10_activities} />
-        </section>
+      {view !== 'activities' && (
+        <header className="app-header">
+          <h1 className="app-title">Ride the Wave</h1>
+        </header>
       )}
 
       {/* COMBINED HEATMAP */}
-      {stats.all_polylines?.length > 0 && (
+      {view !== 'activities' && stats.all_polylines?.length > 0 && (
         <section id="heatmap-section">
           <CombinedMap polylines={stats.all_polylines} color={sportTheme.color} />
+        </section>
+      )}
+
+      {/* PROGRESS BAR */}
+      {view !== 'activities' && <ProgressSection stats={stats} />}
+
+      {/* RECENT ACTIVITIES INFINITE CAROUSEL */}
+      {view !== 'map' && stats.last_10_activities?.length > 0 && (
+        <section id="recent-activities">
+          <p className="section-heading">Recent Activities</p>
+          <ActivityCarousel activities={stats.last_10_activities} />
         </section>
       )}
     </div>
