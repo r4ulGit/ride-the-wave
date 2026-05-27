@@ -80,9 +80,12 @@ function App() {
       {/* HEADER */}
       {view !== 'activities' && (
         <header className="app-header">
-          <h1 className="app-title">Ride the Wave</h1>
+          <h1 className="app-title">Kilómetros recorridos</h1>
         </header>
       )}
+
+      {/* PROGRESS BAR */}
+      {view !== 'activities' && <ProgressSection stats={stats} />}
 
       {/* COMBINED HEATMAP */}
       {view !== 'activities' && stats.all_polylines?.length > 0 && (
@@ -90,9 +93,6 @@ function App() {
           <CombinedMap polylines={stats.all_polylines} color={sportTheme.color} />
         </section>
       )}
-
-      {/* PROGRESS BAR */}
-      {view !== 'activities' && <ProgressSection stats={stats} />}
 
       {/* RECENT ACTIVITIES INFINITE CAROUSEL */}
       {view !== 'map' && stats.last_10_activities?.length > 0 && (
