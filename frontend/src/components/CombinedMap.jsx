@@ -65,37 +65,7 @@ export function CombinedMap({ polylines, color }) {
       { maxZoom: 19 }
     ).addTo(map);
 
-    // Find the starting point coordinate dynamically from the first chronological activity (last in the array)
-    let startCoords = null;
-    for (let i = polylines.length - 1; i >= 0; i--) {
-      const positions = decodePolyline(polylines[i]);
-      if (positions && positions.length > 0) {
-        startCoords = positions[0]; // First coordinate of the earliest activity
-        break;
-      }
-    }
 
-    // Render the starting point marker in red if a coordinate is resolved
-    if (startCoords) {
-      // Glow ring
-      L.circleMarker(startCoords, {
-        radius: 14,
-        fillColor: '#ef4444',
-        color: '#ef4444',
-        weight: 1,
-        fillOpacity: 0.15,
-        interactive: false
-      }).addTo(map);
-
-      // Core red dot marker
-      L.circleMarker(startCoords, {
-        radius: 7,
-        fillColor: '#ef4444',
-        color: '#ffffff',
-        weight: 2,
-        fillOpacity: 1.0
-      }).addTo(map).bindTooltip("Starting Point", { direction: 'top' });
-    }
 
     let allPositions = [];
 
@@ -137,7 +107,7 @@ export function CombinedMap({ polylines, color }) {
   return (
     <div className="combined-map-wrapper glass-card animate-in" style={{ display: 'flex', flexDirection: 'column', marginBottom: '2.5rem' }}>
       <div className="card-body" style={{ borderBottom: '1px solid var(--glass-border)' }}>
-        <div className="card-title">Progreso actual</div>
+        <div className="card-title">Cada km recorrido se convierte en ayuda real</div>
       </div>
       <div className="card-map" style={{ height: '400px', width: '100%', position: 'relative' }}>
         <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
