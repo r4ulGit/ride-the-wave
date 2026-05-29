@@ -35,3 +35,5 @@ jobs:
         aws_region: eu-west-1
         function_name: RideTheWaveAPI
         zip_file: api_package.zip
+        environment: API_KEY=${{ secrets.API_KEY }},API_SIGNING_SECRET=${{ secrets.API_SIGNING_SECRET }}
+
