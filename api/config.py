@@ -25,4 +25,32 @@ try:
 except (ValueError, TypeError):
     GOAL_KM = 500.0
 
-# Trigger reload
+# API Auth configuration
+API_KEY = os.getenv('API_KEY', '')
+API_SIGNING_SECRET = os.getenv('API_SIGNING_SECRET', '')
+try:
+    AUTH_TOLERANCE_SECONDS = int(os.getenv('AUTH_TOLERANCE_SECONDS', 300))
+except (ValueError, TypeError):
+    AUTH_TOLERANCE_SECONDS = 300
+
+try:
+    TOKEN_TTL_SECONDS = int(os.getenv('TOKEN_TTL_SECONDS', 300))
+except (ValueError, TypeError):
+    TOKEN_TTL_SECONDS = 300
+
+# Rate limiting
+try:
+    RATE_LIMIT_MAX = int(os.getenv('RATE_LIMIT_MAX', 30))
+except (ValueError, TypeError):
+    RATE_LIMIT_MAX = 30
+
+
+
+try:
+    RATE_LIMIT_WINDOW = int(os.getenv('RATE_LIMIT_WINDOW', 60))
+except (ValueError, TypeError):
+    RATE_LIMIT_WINDOW = 60
+
+# CORS Allowed Origins
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
+

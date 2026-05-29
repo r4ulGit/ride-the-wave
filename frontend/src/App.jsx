@@ -4,6 +4,7 @@ import { API_URL, getSport } from './config';
 import { ProgressSection } from './components/ProgressSection';
 import { ActivityCarousel } from './components/ActivityCarousel';
 import { CombinedMap } from './components/CombinedMap';
+import { getAuthHeaders } from './apiAuth';
 
 function App() {
   const [stats, setStats] = useState(null);
@@ -32,8 +33,10 @@ function App() {
       }
     }
 
-    fetch(API_URL)
+    getAuthHeaders()
+      .then(headers => fetch(API_URL, { headers }))
       .then(r => {
+
         if (!r.ok) return r.text().then(t => { throw new Error(t || 'Network error') });
         return r.json();
       })
