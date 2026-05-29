@@ -94,25 +94,29 @@ def process_activities(event, context):
     if not event:
         event = {}
         
-    path = event.get('rawPath', '/')
-    # Handle direct requestContext path for format version 1.0 or local dev tests
-    if path == '/' and event.get('path'):
-        path = event.get('path')
-        
-    method = event.get('requestContext', {}).get('http', {}).get('method', 'GET')
+    # 1. Resolve path (supports both rawPath [v2.0] and path [v1.0])
+    path = event.get('rawPath') or event.get('path') or '/'
+    
+    # 2. Resolve method (supports both requestContext.http.method [v2.0] and httpMethod [v1.0])
+    method = event.get('requestContext', {}).get('http', {}).get('method') or event.get('httpMethod') or 'GET'
+    method = method.upper()
+    
     headers = event.get('headers', {})
     
-    # Resolve CORS origin from headers if present, default to *
-    origin = headers.get('origin', '*')
+    # Resolve CORS origin from headers case-insensitively, default to *
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    origin = headers_lower.get('origin', '*')
     
-    # Preflight preflight requests
+    # Preflight requests
     if method == 'OPTIONS':
         return add_cors_headers({'statusCode': 204, 'body': ''}, origin)
     
-    # Resolve Client IP
-    client_ip = event.get('requestContext', {}).get('http', {}).get('sourceIp')
+    # 3. Resolve Client IP (supports both requestContext.http.sourceIp [v2.0] and requestContext.identity.sourceIp [v1.0])
+    client_ip = (
+        event.get('requestContext', {}).get('http', {}).get('sourceIp') or 
+        event.get('requestContext', {}).get('identity', {}).get('sourceIp')
+    )
     if not client_ip:
-        headers_lower = {k.lower(): v for k, v in headers.items()}
         forwarded_for = headers_lower.get('x-forwarded-for', '')
         if forwarded_for:
             client_ip = forwarded_for.split(',')[0].strip()
@@ -131,6 +135,7 @@ def process_activities(event, context):
         }
         
     return add_cors_headers(response, origin)
+
 
 # --- LOCAL SERVER ---
 if __name__ == "__main__":
