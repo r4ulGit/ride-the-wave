@@ -8,6 +8,36 @@ def process_activities_logic():
     # 1. Fetch all data from DynamoDB
     items = get_all_activities()
     
+    # 1b. Filter by config.START_DATE if configured
+    if config.START_DATE:
+        try:
+            config_dt = datetime.strptime(config.START_DATE.strip(), '%d/%m/%Y')
+            now_utc = datetime.utcnow()
+            
+            if config_dt > now_utc:
+                # START_DATE is in the future -> Return no activities
+                print(f"📅 START_DATE {config.START_DATE} is in the future. Returning empty list.")
+                items = []
+            else:
+                # START_DATE is in the past -> Filter activities with date > START_DATE
+                filtered_items = []
+                for item in items:
+                    start_date_str = item.get('start_date', '')
+                    if start_date_str:
+                        try:
+                            activity_dt = datetime.strptime(start_date_str, '%Y-%m-%dT%H:%M:%SZ')
+                            if activity_dt > config_dt:
+                                filtered_items.append(item)
+                        except ValueError:
+                            # Keep items with malformed dates
+                            filtered_items.append(item)
+                    else:
+                        filtered_items.append(item)
+                items = filtered_items
+                print(f"📅 Filtered activities using START_DATE={config.START_DATE}. Remaining: {len(items)} items.")
+        except Exception as e:
+            print(f"⚠️ Error parsing START_DATE '{config.START_DATE}': {e}")
+
     # 2. Process all activities — build comprehensive stats
     total_km = 0
     total_elevation = 0

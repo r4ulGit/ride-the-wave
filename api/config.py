@@ -54,3 +54,6 @@ except (ValueError, TypeError):
 # CORS Allowed Origins
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
 
+# Custom start date to filter activities from (Format: DD/MM/YYYY)
+START_DATE = os.getenv('START_DATE', '')
+
