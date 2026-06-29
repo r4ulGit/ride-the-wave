@@ -41,7 +41,7 @@
   font-family: 'Racing Sans One', 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   color: var(--text-primary);
-  background-color: var(--bg-primary);
+  background-color: transparent;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -51,10 +51,7 @@
 
 body {
   min-height: 100vh;
-  background: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(98, 192, 187, 0.15) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 40% at 90% 110%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+  background: transparent;
 }
 
 #root {
