@@ -72,6 +72,7 @@ function App() {
 
   const filterWord = stats.config?.filter_word || 'Run';
   const sportTheme = getSport(filterWord);
+  const title = stats.config?.title || 'Kilómetros recorridos';
 
   // Parse modular view parameter
   const params = new URLSearchParams(window.location.search);
@@ -83,7 +84,7 @@ function App() {
       {/* HEADER */}
       {view !== 'activities' && (
         <header className="app-header">
-          <h1 className="app-title">Kilómetros recorridos</h1>
+          <h1 className="app-title">{title}</h1>
         </header>
       )}
 
@@ -93,15 +94,15 @@ function App() {
       {/* COMBINED HEATMAP */}
       {view !== 'activities' && stats.all_polylines?.length > 0 && (
         <section id="heatmap-section">
-          <CombinedMap polylines={stats.all_polylines} color={sportTheme.color} />
+          <CombinedMap polylines={stats.all_polylines} color={sportTheme.color} subtitle={stats.config?.subtitle} />
         </section>
       )}
 
       {/* RECENT ACTIVITIES INFINITE CAROUSEL */}
-      {view !== 'map' && stats.last_10_activities?.length > 0 && (
+      {view !== 'map' && stats.last_activities?.length > 0 && (
         <section id="recent-activities">
           <p className="section-heading">Recent Activities</p>
-          <ActivityCarousel activities={stats.last_10_activities} />
+          <ActivityCarousel activities={stats.last_activities} />
         </section>
       )}
     </div>

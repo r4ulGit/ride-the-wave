@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { decodePolyline } from '../utils/helpers';
 
-export function CombinedMap({ polylines, color }) {
+export function CombinedMap({ polylines, color, subtitle }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -106,9 +106,11 @@ export function CombinedMap({ polylines, color }) {
 
   return (
     <div className="combined-map-wrapper glass-card animate-in" style={{ display: 'flex', flexDirection: 'column', marginBottom: '2.5rem' }}>
-      <div className="card-body" style={{ borderBottom: '1px solid var(--glass-border)' }}>
-        <div className="card-title">Cada km recorrido se convierte en ayuda real</div>
-      </div>
+      {subtitle && (
+        <div className="card-body" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+          <div className="card-title">{subtitle}</div>
+        </div>
+      )}
       <div className="card-map" style={{ height: '400px', width: '100%', position: 'relative' }}>
         <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
       </div>

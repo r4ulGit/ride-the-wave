@@ -9,7 +9,10 @@ try:
 except ImportError:
     pass
 
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'Ride-The-Wave-Activities')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME')
+if not DYNAMODB_TABLE_NAME:
+    raise EnvironmentError("❌ DYNAMODB_TABLE_NAME env var is required but not set.")
+
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 # Local DB Configuration
@@ -19,11 +22,19 @@ LOCAL_DB_ENDPOINT = os.getenv('LOCAL_DB_ENDPOINT', 'http://localhost:8000')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
-TITLE_FILTER = os.getenv('TITLE_FILTER', 'Run')
-try:
-    GOAL_KM = float(os.getenv('GOAL_KM', 500))
-except (ValueError, TypeError):
-    GOAL_KM = 500.0
+# --- Dashboard Display ---
+TITLE = os.getenv('TITLE', '')
+SUBTITLE = os.getenv('SUBTITLE', '')
+
+# --- Activity Filtering ---
+SPORTS_LIST = os.getenv('SPORTS_LIST', 'Run')
+
+# --- Carousel & Goal ---
+_last_act_raw = os.getenv('LAST_ACT', '')
+LAST_ACT = int(_last_act_raw) if _last_act_raw.strip() else None
+
+_goal_raw = os.getenv('GOAL_KM', '')
+GOAL_KM = float(_goal_raw) if _goal_raw.strip() else None
 
 # API Auth configuration
 API_KEY = os.getenv('API_KEY', '')

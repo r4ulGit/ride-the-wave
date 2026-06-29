@@ -1,16 +1,39 @@
 import boto3
 import requests
 import json
+import os
 from decimal import Decimal
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    # Load from api/.env or worker/.env
+    for path in [Path(__file__).resolve().parent.parent / 'api' / '.env', Path(__file__).resolve().parent.parent / 'worker' / '.env']:
+        if path.exists():
+            load_dotenv(dotenv_path=path)
+            break
+except ImportError:
+    pass
 
 def seed_db():
-    print("🌍 Fetching data from Production API...")
+    seed_url = os.getenv('SEED_API_URL')
+    if not seed_url:
+        print("⚠️ SEED_API_URL env var is not set. Cannot fetch production data to seed. Please set it or run with SEED_API_URL=<url>.")
+        return
+
+    print(f"🌍 Fetching data from Production API at {seed_url}...")
     try:
-        response = requests.get("https://4gep4vk4j4tdbl2uhx2pdu5gt40hkcvy.lambda-url.eu-west-1.on.aws/")
+        response = requests.get(seed_url)
         data = response.json()
-        activities = data.get("last_10_activities", [])
+        # Support both 'last_activities' and 'last_10_activities' keys for compatibility
+        activities = data.get("last_activities", data.get("last_10_activities", []))
     except Exception as e:
         print(f"❌ Failed to fetch from production API: {e}")
+        return
+
+    table_name = os.getenv('DYNAMODB_TABLE_NAME')
+    if not table_name:
+        print("❌ Error: DYNAMODB_TABLE_NAME env var is not set.")
         return
 
     print(f"📦 Found {len(activities)} activities. Connecting to local DynamoDB...")
@@ -22,7 +45,7 @@ def seed_db():
         aws_secret_access_key='dummy'
     )
     
-    table = dynamodb.Table('Ride-The-Wave-Activities')
+    table = dynamodb.Table(table_name)
     
     for act in activities:
         item = {

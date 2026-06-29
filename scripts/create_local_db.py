@@ -1,5 +1,16 @@
 import boto3
 import os
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    # Load from api/.env or worker/.env
+    for path in [Path(__file__).resolve().parent.parent / 'api' / '.env', Path(__file__).resolve().parent.parent / 'worker' / '.env']:
+        if path.exists():
+            load_dotenv(dotenv_path=path)
+            break
+except ImportError:
+    pass
 
 def create_table():
     print("🔌 Connecting to local DynamoDB...")
@@ -11,7 +22,11 @@ def create_table():
         aws_secret_access_key='dummy'
     )
     
-    table_name = 'Ride-The-Wave-Activities'
+    table_name = os.getenv('DYNAMODB_TABLE_NAME')
+    if not table_name:
+        print("❌ Error: DYNAMODB_TABLE_NAME env var is not set in api/.env or worker/.env")
+        return
+
     
     try:
         print(f"🛠️ Creating table '{table_name}'...")
