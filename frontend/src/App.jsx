@@ -71,7 +71,8 @@ function App() {
   );
 
   const filterWord = stats.config?.filter_word || 'Run';
-  const sportTheme = getSport(filterWord);
+  const primarySport = filterWord.split(',')[0].trim();
+  const sportTheme = getSport(primarySport);
   const title = stats.config?.title || 'Kilómetros recorridos';
 
   // Parse modular view parameter
