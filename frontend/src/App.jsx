@@ -56,7 +56,7 @@ function App() {
   if (loading) return (
     <div className="loading-screen">
       <div className="loading-spinner" />
-      <span className="loading-text">Loading your activities...</span>
+      <span className="loading-text">Cargando tus actividades...</span>
     </div>
   );
 
@@ -64,7 +64,7 @@ function App() {
     <div className="error-screen">
       <div>
         <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.75rem' }}>😵</span>
-        <strong>Error loading data</strong>
+        <strong>Error al cargar los datos</strong>
         <p style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.6 }}>{error}</p>
       </div>
     </div>
@@ -102,7 +102,7 @@ function App() {
       {/* RECENT ACTIVITIES INFINITE CAROUSEL */}
       {view !== 'map' && stats.last_activities?.length > 0 && (
         <section id="recent-activities">
-          <p className="section-heading">Recent Activities</p>
+          <p className="section-heading">Actividades Recientes</p>
           <ActivityCarousel activities={stats.last_activities} />
         </section>
       )}

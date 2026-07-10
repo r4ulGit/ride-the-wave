@@ -1,14 +1,14 @@
 export const API_URL = import.meta.env.VITE_API_URL;
 
 export const SPORT_CONFIG = {
-  Run:     { icon: '🏃', color: '#62c0bb', label: 'Run' },
-  Ride:    { icon: '🚴', color: '#3b82f6', label: 'Ride' },
-  Swim:    { icon: '🏊', color: '#06b6d4', label: 'Swim' },
-  Hike:    { icon: '🥾', color: '#22c55e', label: 'Hike' },
-  Walk:    { icon: '🚶', color: '#84cc16', label: 'Walk' },
-  Workout: { icon: '💪', color: '#a855f7', label: 'Workout' },
+  Run:     { icon: '🏃', color: '#62c0bb', label: 'Carrera' },
+  Ride:    { icon: '🚴', color: '#3b82f6', label: 'Ciclismo' },
+  Swim:    { icon: '🏊', color: '#06b6d4', label: 'Natación' },
+  Hike:    { icon: '🥾', color: '#22c55e', label: 'Senderismo' },
+  Walk:    { icon: '🚶', color: '#84cc16', label: 'Caminata' },
+  Workout: { icon: '💪', color: '#a855f7', label: 'Entrenamiento' },
   Yoga:    { icon: '🧘', color: '#ec4899', label: 'Yoga' },
-  Default: { icon: '⚡', color: '#62c0bb', label: 'Activity' },
+  Default: { icon: '⚡', color: '#62c0bb', label: 'Actividad' },
 };
 
 export function getSport(sportType) {

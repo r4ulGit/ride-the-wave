@@ -29,11 +29,11 @@ export function ActivityCard({ act, onCenterMe }) {
         <div className="card-stats">
           <div className="card-stat">
             <span className="card-stat-value">{formatNum(act.distance_km)} <span style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>km</span></span>
-            <span className="card-stat-label">Distance</span>
+            <span className="card-stat-label">Distancia</span>
           </div>
           <div className="card-stat">
             <span className="card-stat-value">{formatDuration(act.moving_time_seconds)}</span>
-            <span className="card-stat-label">Time</span>
+            <span className="card-stat-label">Tiempo</span>
           </div>
           <div className="card-stat">
             {isRun ? (
@@ -44,7 +44,7 @@ export function ActivityCard({ act, onCenterMe }) {
             ) : (
               <>
                 <span className="card-stat-value">{formatNum(act.total_elevation_gain, 0)} <span style={{fontSize:'0.7rem',color:'var(--text-muted)'}}>m</span></span>
-                <span className="card-stat-label">Elevation</span>
+                <span className="card-stat-label">Desnivel</span>
               </>
             )}
           </div>

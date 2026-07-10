@@ -46,5 +46,5 @@ export function formatPace(speedMs) {
 }
 
 export function formatNum(n, dec = 1) {
-  return (n || 0).toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  return (n || 0).toLocaleString('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
