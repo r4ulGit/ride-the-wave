@@ -10,17 +10,11 @@ export function ProgressSection({ stats }) {
   const sportTheme   = getSport(primarySport);
   const sportIcon    = sportTheme.icon;
 
-  const getTranslatedSports = (word) => {
-    if (!word) return 'Actividades';
-    return word.split(',').map(s => getSport(s.trim()).label).join(', ');
-  };
-  const translatedSports = getTranslatedSports(filterWord);
-
   if (goal === undefined || goal === null || goal <= 0) {
     return (
       <section className="progress-section glass-card animate-in" id="progress-section" style={{ padding: '1.5rem 2rem', marginBottom: '2.5rem' }}>
         <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
-          <span className="progress-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total {translatedSports}</span>
+          <span className="progress-title" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total</span>
           <div className="progress-numbers" style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
             <span style={{ fontSize: '1.5rem', marginRight: '0.25rem' }}>{sportIcon}</span>
             <span className="progress-current" style={{ fontSize: '1.8rem', fontWeight: 900 }}>{formatNum(filteredKm)}</span>
@@ -36,7 +30,7 @@ export function ProgressSection({ stats }) {
   return (
     <section className="progress-section glass-card animate-in" id="progress-section">
       <div className="progress-header">
-        <span className="progress-title">Objetivo de {translatedSports}</span>
+        <span className="progress-title">Objetivo</span>
         <div className="progress-numbers">
           <span className="progress-current">{formatNum(filteredKm)}</span>
           <span className="progress-goal">/ {formatNum(goal, 0)} km</span>
