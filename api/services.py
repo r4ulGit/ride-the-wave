@@ -44,7 +44,7 @@ def process_activities_logic():
     total_time_seconds = 0
     total_kudos = 0
     match_count = 0
-    filter_lower = config.TITLE_FILTER.lower()
+    sports_set = {s.strip().lower() for s in config.SPORTS_LIST.split(',') if s.strip()}
     
     # Per-sport breakdown
     sport_stats = defaultdict(lambda: {
@@ -118,16 +118,16 @@ def process_activities_logic():
         
         # Filter matching
         item_type = item.get('type', '').lower()
-        if filter_lower in item_type:
+        if item_type in sports_set:
             match_count += 1
             matched_activities.append(activity_detail)
     
-    print(f"📊 Result: {len(items)} total activities, {match_count} '{config.TITLE_FILTER}' matches. Total: {total_km:.2f} km.")
-
+    print(f"📊 Result: {len(items)} total activities, {match_count} matches for sports {config.SPORTS_LIST}. Total: {total_km:.2f} km.")
+ 
     # Sort activities by date (newest first)
     all_activities_list.sort(key=lambda x: x.get('date', ''), reverse=True)
     matched_activities.sort(key=lambda x: x.get('date', ''), reverse=True)
-    last_10_activities = matched_activities[:10]
+    last_activities = matched_activities[:config.LAST_ACT] if config.LAST_ACT is not None else matched_activities
     
     # Sort weekly data and get last 8 weeks
     sorted_weeks = sorted(weekly_data.keys(), reverse=True)[:8]
@@ -153,7 +153,7 @@ def process_activities_logic():
         }
         for sport, stats in sorted(sport_stats.items(), key=lambda x: x[1]['distance_km'], reverse=True)
     ]
-
+ 
     # 3. Create comprehensive response
     response_data = {
         "total_km": round(total_km, 2),
@@ -164,14 +164,16 @@ def process_activities_logic():
         "total_kudos": total_kudos,
         "filtered_km": round(sum(a['distance_km'] for a in matched_activities), 2),
         "matches_found": match_count,
-        "last_10_activities": last_10_activities,
+        "last_activities": last_activities,
         "all_polylines": [a['summary_polyline'] for a in matched_activities if a.get('summary_polyline')],
         "sport_breakdown": sport_breakdown,
         "weekly_chart": weekly_chart,
         "config": {
             "goal_km": config.GOAL_KM,
-            "filter_word": config.TITLE_FILTER
+            "filter_word": config.SPORTS_LIST,
+            "title": config.TITLE,
+            "subtitle": config.SUBTITLE
         }
     }
-
+ 
     return response_data

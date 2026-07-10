@@ -10,7 +10,9 @@ except ImportError:
     pass
 
 # --- AWS CONFIG ---
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'Ride-The-Wave-Activities')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME')
+if not DYNAMODB_TABLE_NAME:
+    raise EnvironmentError("❌ DYNAMODB_TABLE_NAME env var is required but not set.")
 AWS_REGION = os.getenv('AWS_REGION', 'eu-west-1')
 
 # Local DB Configuration

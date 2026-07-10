@@ -28,44 +28,6 @@ except Exception as e:
     print(f"❌ Error initializing DynamoDB: {e}")
 
 def get_fallback_activities():
-    import urllib.request
-    import json
-    
-    print("🌍 Fetching live data from production dashboard as fallback...")
-    try:
-        # Fetch live data from the production Lambda URL
-        req = urllib.request.Request(
-            "https://4gep4vk4j4tdbl2uhx2pdu5gt40hkcvy.lambda-url.eu-west-1.on.aws/",
-            headers={'User-Agent': 'Mozilla/5.0'}
-        )
-        with urllib.request.urlopen(req, timeout=5) as response:
-            prod_data = json.loads(response.read().decode('utf-8'))
-            activities = prod_data.get("last_10_activities", [])
-            
-            if activities:
-                print(f"✅ Successfully loaded {len(activities)} live activities from production.")
-                db_style_items = []
-                for act in activities:
-                    db_style_items.append({
-                        'activity_id': str(act.get('id', 'unknown')),
-                        'title': act.get('title', 'Unknown'),
-                        'sport_type': act.get('sport_type', 'Unknown'),
-                        'type': act.get('sport_type', 'Unknown'),
-                        'distance_km': float(act.get('distance_km', 0)),
-                        'moving_time_seconds': int(act.get('moving_time_seconds', 0)),
-                        'total_elevation_gain': float(act.get('total_elevation_gain', 0)),
-                        'start_date': act.get('date', ''),
-                        'start_date_local': act.get('date_local', ''),
-                        'average_speed': float(act.get('average_speed', 0)),
-                        'max_speed': float(act.get('max_speed', 0)),
-                        'kudos_count': int(act.get('kudos_count', 0)),
-                        'device_name': act.get('device_name', 'Unknown'),
-                        'summary_polyline': act.get('summary_polyline', '')
-                    })
-                return db_style_items
-    except Exception as e:
-        print(f"⚠️ Live production fallback failed: {e}")
-
     print("📦 Using pre-packaged high-quality offline mock activities...")
     # Clean offline mockup data with valid GPS polylines for Barcelona & Madrid
     return [
