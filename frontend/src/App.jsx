@@ -14,43 +14,78 @@ function App() {
   useEffect(() => {
     const cacheKey = 'strava_dashboard_data';
     const cacheExpiryKey = 'strava_dashboard_data_expiry';
+    const fetchLockKey = 'strava_dashboard_fetching';
     const cacheTTL = 2 * 60 * 1000; // 2-minute cache TTL
 
-    const cachedData = sessionStorage.getItem(cacheKey);
-    const cachedExpiry = sessionStorage.getItem(cacheExpiryKey);
-    const now = Date.now();
-
-    // Check if valid cache exists to prevent double requests when embedding twice
-    if (cachedData && cachedExpiry && now < parseInt(cachedExpiry, 10)) {
-      try {
-        const parsed = JSON.parse(cachedData);
-        setStats(parsed);
-        setLoading(false);
-        return;
-      } catch (e) {
-        sessionStorage.removeItem(cacheKey);
-        sessionStorage.removeItem(cacheExpiryKey);
+    function tryReadCache() {
+      const cachedData = sessionStorage.getItem(cacheKey);
+      const cachedExpiry = sessionStorage.getItem(cacheExpiryKey);
+      if (cachedData && cachedExpiry && Date.now() < parseInt(cachedExpiry, 10)) {
+        try { return JSON.parse(cachedData); } catch { /* invalid cache */ }
       }
+      return null;
     }
 
-    getAuthHeaders()
-      .then(headers => fetch(API_URL, { headers }))
-      .then(r => {
+    // 1. Check if valid cache already exists
+    const cached = tryReadCache();
+    if (cached) {
+      setStats(cached);
+      setLoading(false);
+      return;
+    }
 
-        if (!r.ok) return r.text().then(t => { throw new Error(t || 'Network error') });
-        return r.json();
-      })
-      .then(data => {
-        if (typeof data.total_km === 'undefined') throw new Error("Bad API response");
-        
-        // Cache the retrieved data
-        sessionStorage.setItem(cacheKey, JSON.stringify(data));
-        sessionStorage.setItem(cacheExpiryKey, (Date.now() + cacheTTL).toString());
+    // 2. Check if another iframe is already fetching (lock-based dedup).
+    //    If a fetch lock exists and was set less than 15s ago, poll for the
+    //    cached result instead of making a parallel API call.
+    const lockTimestamp = sessionStorage.getItem(fetchLockKey);
+    if (lockTimestamp && (Date.now() - parseInt(lockTimestamp, 10)) < 15000) {
+      let attempts = 0;
+      const maxAttempts = 20; // 20 × 500ms = 10s max wait
+      const pollInterval = setInterval(() => {
+        attempts++;
+        const result = tryReadCache();
+        if (result) {
+          clearInterval(pollInterval);
+          setStats(result);
+          setLoading(false);
+        } else if (attempts >= maxAttempts) {
+          // Lock expired without data — fall through and fetch ourselves
+          clearInterval(pollInterval);
+          doFetch();
+        }
+      }, 500);
+      return;
+    }
 
-        setStats(data);
-        setLoading(false);
-      })
-      .catch(e => { setError(e.message); setLoading(false); });
+    doFetch();
+
+    function doFetch() {
+      // Set lock so parallel iframes know a fetch is in progress
+      sessionStorage.setItem(fetchLockKey, Date.now().toString());
+
+      getAuthHeaders()
+        .then(headers => fetch(API_URL, { headers }))
+        .then(r => {
+          if (!r.ok) return r.text().then(t => { throw new Error(t || 'Network error') });
+          return r.json();
+        })
+        .then(data => {
+          if (typeof data.total_km === 'undefined') throw new Error("Bad API response");
+          
+          // Cache the retrieved data and release the lock
+          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          sessionStorage.setItem(cacheExpiryKey, (Date.now() + cacheTTL).toString());
+          sessionStorage.removeItem(fetchLockKey);
+
+          setStats(data);
+          setLoading(false);
+        })
+        .catch(e => {
+          sessionStorage.removeItem(fetchLockKey);
+          setError(e.message);
+          setLoading(false);
+        });
+    }
   }, []);
 
   if (loading) return (

@@ -1,6 +1,11 @@
 const TOKEN_CACHE_KEY = 'rtw_auth_token';
 const TOKEN_EXPIRY_KEY = 'rtw_auth_expires';
 
+// In-flight token request deduplication — prevents parallel iframes from
+// each requesting their own token (which causes 401s due to Lambda's
+// in-memory token store across concurrent instances).
+let _pendingTokenRequest = null;
+
 // Helper to check if cached token is still valid (with 30s safety buffer)
 function getCachedToken() {
   const token = sessionStorage.getItem(TOKEN_CACHE_KEY);
@@ -99,6 +104,10 @@ async function requestNewToken() {
 /**
  * Returns authorization headers (Bearer token) for data fetches.
  * Resolves with cached token if valid, otherwise retrieves a new one.
+ * 
+ * Deduplicates concurrent calls: if a token request is already in-flight
+ * (e.g. from a parallel iframe), subsequent callers share the same promise
+ * instead of firing a second POST /auth/token.
  */
 export async function getAuthHeaders() {
   const cachedToken = getCachedToken();
@@ -106,7 +115,24 @@ export async function getAuthHeaders() {
     return { 'Authorization': `Bearer ${cachedToken}` };
   }
 
-  const freshToken = await requestNewToken();
+  // Deduplicate: if a request is already in-flight, wait for it
+  if (_pendingTokenRequest) {
+    try {
+      const token = await _pendingTokenRequest;
+      if (token) {
+        return { 'Authorization': `Bearer ${token}` };
+      }
+    } catch {
+      // If the pending request failed, fall through to try our own
+    }
+  }
+
+  // No in-flight request — start one and share the promise
+  _pendingTokenRequest = requestNewToken().finally(() => {
+    _pendingTokenRequest = null;
+  });
+
+  const freshToken = await _pendingTokenRequest;
   if (freshToken) {
     return { 'Authorization': `Bearer ${freshToken}` };
   }
