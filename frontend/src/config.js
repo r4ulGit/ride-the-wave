@@ -1,4 +1,9 @@
 export const API_URL = import.meta.env.VITE_API_URL;
+export const MAP_KEY = import.meta.env.MAP_KEY || import.meta.env.VITE_MAP_KEY || '';
+
+export const CARTO_TILE_URL = MAP_KEY
+  ? `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=${MAP_KEY}`
+  : 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
 
 export const SPORT_CONFIG = {
   Run:     { icon: '🏃', color: '#62c0bb', label: 'Carrera' },

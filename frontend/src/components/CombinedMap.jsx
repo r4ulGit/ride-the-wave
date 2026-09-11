@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { decodePolyline } from '../utils/helpers';
+import { CARTO_TILE_URL } from '../config';
 
 export function CombinedMap({ polylines, color, subtitle }) {
   const containerRef = useRef(null);
@@ -59,9 +60,9 @@ export function CombinedMap({ polylines, color, subtitle }) {
 
     container.addEventListener('wheel', handleWheel, { passive: false });
 
-    // CartoDB Positron (Light) tiles
+    // CartoDB tiles
     L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+      CARTO_TILE_URL,
       { maxZoom: 19 }
     ).addTo(map);
 
